@@ -259,6 +259,19 @@ export default function Nav3DIcon({ name, active = false, size = 26 }: Nav3DIcon
           </g>
         )}
 
+        {name === "map" && (
+          // 3D Location Radar Pin
+          <g>
+            <path
+              d="M16 4C11.58 4 8 7.58 8 12C8 17.5 16 27 16 27C16 27 24 17.5 24 12C24 7.58 20.42 4 16 4Z"
+              fill={`url(#${primaryGradId})`}
+            />
+            <circle cx="16" cy="11.5" r="3.5" fill="#ffffff" />
+            <circle cx="16" cy="11.5" r="1.8" fill={active ? "#9333ea" : "#4c1d95"} />
+            <ellipse cx="14.5" cy="8" rx="2" ry="1.2" transform="rotate(-30 14.5 8)" fill="#ffffff" opacity="0.75" />
+          </g>
+        )}
+
         {name === "one" && (
           // 3D Netory One Ribbon Emblem
           <image href="/one.png" x="3" y="3" width="26" height="26" preserveAspectRatio="xMidYMid meet" />

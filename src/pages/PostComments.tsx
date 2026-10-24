@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import OneBadge from "../components/OneBadge"
+import CircleRecorderOverlay from "../components/CircleRecorderOverlay"
 import { supabase, isSupabaseConfigured } from "../lib/supabase"
 
 interface CommentItem {
@@ -28,6 +29,8 @@ export default function PostComments({
   const [draft, setDraft] = useState("")
   const [isFocused, setIsFocused] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [recorderOpen, setRecorderOpen] = useState(false)
+  const [activeCirclePlay, setActiveCirclePlay] = useState<string | number | null>(null)
 
   // Загружаем комментарии из Supabase, если передан реальный postId
   useEffect(() => {
@@ -64,15 +67,11 @@ export default function PostComments({
     loadComments()
   }, [open, postId])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!draft.trim() || loading) return
-
-    const text = draft.trim()
-    setDraft("")
+  const addCommentItem = async (text: string) => {
     if (!open) onOpen()
 
     const newComment: CommentItem = {
+      id: "c-" + Date.now(),
       author: name,
       avatar: "https://i.pravatar.cc/100?img=11",
       text,
@@ -82,7 +81,7 @@ export default function PostComments({
 
     setComments((prev) => [...prev, newComment])
 
-    // Если подключен Supabase и это пост из БД — сохраняем
+    // Сохраняем в Supabase при наличии подключения
     if (isSupabaseConfigured && postId && typeof postId === "string" && !postId.startsWith("temp-")) {
       setLoading(true)
       try {
@@ -95,11 +94,23 @@ export default function PostComments({
           })
         }
       } catch (err) {
-        console.error("Ошибка добавления комментария в Supabase:", err)
+        console.error("Ошибка сохранения комментария в Supabase:", err)
       } finally {
         setLoading(false)
       }
     }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!draft.trim() || loading) return
+    const text = draft.trim()
+    setDraft("")
+    addCommentItem(text)
+  }
+
+  const handlePublishCircleComment = (clipUrl: string) => {
+    addCommentItem(`circle:${clipUrl}`)
   }
 
   return (
@@ -111,7 +122,7 @@ export default function PostComments({
           </div>
           {!comments.length && (
             <p className="first-comment">
-              Начните разговор — поделитесь своими мыслями.
+              Начните разговор — поделитесь своими мыслями или запишите видеокружок.
             </p>
           )}
           {comments.map((item, i) => (
@@ -124,13 +135,61 @@ export default function PostComments({
                 }
                 alt=""
               />
-              <div>
+              <div style={{ flex: 1 }}>
                 <strong>
                   {item.author}
                   {item.isOne && <OneBadge />}
                   <small>{item.time}</small>
                 </strong>
-                <p>{item.text}</p>
+
+                {item.text.startsWith("circle:") ? (
+                  <div style={{ marginTop: "8px" }}>
+                    <div
+                      style={{
+                        position: "relative",
+                        width: "116px",
+                        height: "116px",
+                        borderRadius: "50%",
+                        overflow: "hidden",
+                        border: "3px solid #9333ea",
+                        boxShadow: "0 6px 20px rgba(147, 51, 234, 0.35)",
+                        cursor: "pointer",
+                        background: "#000",
+                      }}
+                      onClick={() =>
+                        setActiveCirclePlay(activeCirclePlay === (item.id || i) ? null : (item.id || i))
+                      }
+                      title="Нажмите, чтобы включить звук"
+                    >
+                      <video
+                        src={item.text.replace("circle:", "")}
+                        autoPlay
+                        loop
+                        playsInline
+                        muted={activeCirclePlay !== (item.id || i)}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "6px",
+                          right: "6px",
+                          background: "rgba(0,0,0,0.65)",
+                          backdropFilter: "blur(4px)",
+                          borderRadius: "9999px",
+                          padding: "2px 6px",
+                          fontSize: "10px",
+                          color: "#fff",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {activeCirclePlay === (item.id || i) ? "🔊 Звук" : "🔇 Видео"}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p>{item.text}</p>
+                )}
               </div>
             </div>
           ))}
@@ -152,10 +211,35 @@ export default function PostComments({
               if (!open) onOpen()
             }}
             onBlur={() => setIsFocused(false)}
-            placeholder="Оставьте немного тепла…"
+            placeholder="Оставьте комментарий или кружок…"
             aria-label="Комментарий"
             className="comment-text-input"
           />
+
+          <button
+            type="button"
+            aria-label="Записать видеокружок в ответ"
+            title="Записать видеокружок в ответ"
+            onClick={() => {
+              if (!open) onOpen()
+              setRecorderOpen(true)
+            }}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: "4px 8px",
+              cursor: "pointer",
+              fontSize: "17px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#7c3aed",
+              transition: "transform 0.15s ease",
+            }}
+          >
+            🎥
+          </button>
+
           <button
             type="submit"
             disabled={!draft.trim() || loading}
@@ -178,6 +262,19 @@ export default function PostComments({
           </button>
         </div>
       </form>
+
+      {/* Оверлей записи видеокружка для комментария */}
+      {recorderOpen && (
+        <CircleRecorderOverlay
+          isOpen={true}
+          onClose={() => setRecorderOpen(false)}
+          onPublish={(clipUrl) => {
+            setRecorderOpen(false)
+            handlePublishCircleComment(clipUrl)
+          }}
+          userName={name}
+        />
+      )}
     </div>
   )
 }

@@ -14,9 +14,11 @@ import MusicPage from "./pages/MusicPage"
 import OneBadge from "./components/OneBadge"
 import SettingsPage from "./pages/SettingsPage"
 import CreatePostPage from "./pages/CreatePostPage"
+import MapPage from "./pages/MapPage"
 import { supabase, isSupabaseConfigured } from "./lib/supabase"
 
 const routes: Record<string, string> = {
+  Карта: "/map",
   Профиль: "/profile",
   Netorys: "/netorys",
   "Netory One": "/one",
@@ -45,6 +47,7 @@ const currentPage = () =>
   Object.keys(routes).find((key) => routes[key] === window.location.pathname) ||
   "Лента"
 const mainPages = [
+  "Карта",
   "Создать публикацию",
   "Настройки",
   "Редактировать профиль",
@@ -551,7 +554,7 @@ export default function App() {
         (
           <div
             className={`layout ${authPage ? "auth-layout focused-layout" : ""} ${
-              ["Настройки", "Редактировать профиль", "Сообщения", "Друзья", "Музыка", "Группы", "Netorys", "Профиль", "Дизайн каждый день", "За пределами города", "Музыка внутри", "Netory One"].includes(page)
+              ["Настройки", "Редактировать профиль", "Сообщения", "Друзья", "Музыка", "Группы", "Netorys", "Профиль", "Дизайн каждый день", "За пределами города", "Музыка внутри", "Netory One", "Карта"].includes(page)
                 ? "focused-layout"
                 : ""
             }`}
@@ -563,6 +566,7 @@ export default function App() {
                   ["Лента", "home", ""],
                   ["Netorys", "clapper", "клипы"],
                   ["Сообщения", "chat", "3"],
+                  ["Карта", "map", "live"],
                   ["Netory One", "one", isOneSubscriber ? "" : "pro"],
                   ["Музыка", "music", ""],
                   ["Группы", "groups", ""],
@@ -715,6 +719,15 @@ export default function App() {
                 />
               ) : page === "Группы" || ["Дизайн каждый день", "За пределами города", "Музыка внутри"].includes(page) ? (
                 <GroupsPage initialGroupId={page === "Группы" ? undefined : page} authenticated={auth} onRequireAuth={() => nav("Войти")} />
+              ) : page === "Карта" ? (
+                <MapPage
+                  userName={name}
+                  onNavigate={nav}
+                  onSelectRecipient={(r) => {
+                    setRecipient(r)
+                    nav("Сообщения")
+                  }}
+                />
               ) : page === "Музыка" ? null : page === "Звонки" ? (
                 <UtilityPage
                   page={page}
