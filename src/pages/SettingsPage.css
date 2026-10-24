@@ -1,0 +1,41 @@
+.account-page { max-width:900px; margin:24px auto 64px; color:var(--ink); }
+.account-heading h1 { font-size:clamp(25px,3vw,36px); font-weight:600; letter-spacing:-1px; margin:14px 0; }
+.account-heading p,.account-note { color:var(--muted); font-size:12px; line-height:1.9; }
+.account-tabs { display:flex; gap:28px; margin:28px 0; border-bottom:1px solid var(--border-soft); }
+.account-tabs button { padding:12px 0; border-bottom:2px solid transparent; color:var(--muted); font-size:12px; }
+.account-tabs button.is-active { border-color:var(--accent); color:var(--ink); }
+.account-panel { padding:28px; border:1px solid var(--border-soft); border-radius:16px; background:var(--surface); margin-bottom:20px; }
+.account-panel h2 { font-size:16px; font-weight:600; margin:0 0 20px; }
+.account-row { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:20px 0; border-top:1px solid var(--border-soft); }
+.account-row strong { font-size:12px; font-weight:600; }
+.account-row p { font-size:11px; color:var(--muted); line-height:1.8; margin:7px 0 0; }
+.account-row > span { color:var(--muted); font-size:10px; white-space:nowrap; }
+.account-row > button { padding:10px 14px; border:1px solid var(--border-soft); border-radius:8px; font-size:11px; }
+.account-form { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+.account-form h2,.account-wide,.account-form-footer { grid-column:1/-1; }
+.account-form label { display:flex; flex-direction:column; gap:10px; font-size:11px; }
+.account-form input,.account-form textarea { width:100%; padding:13px; border:1px solid var(--border-soft); border-radius:8px; background:var(--surface-soft); font-size:12px; }
+.account-form textarea { resize:vertical; }
+.account-form-footer { display:flex; align-items:center; gap:20px; }
+.account-form-footer .primary { width:auto; background:var(--ink); }
+.account-form-footer > button:last-child { font-size:11px; }
+.account-page { --ink:#574365; --surface:#fff; --surface-soft:#fcfafd; --border-soft:#ece4f2; --accent:#a580bf; }
+.account-heading { padding:16px 0 4px; }
+.account-heading h1 { font-size:clamp(30px,4vw,44px); font-weight:550; letter-spacing:-1.7px; }
+.account-profile-preview { position:relative; display:flex; gap:22px; align-items:center; padding:38px 30px; border:1px solid #e7dced; border-radius:20px; background:#f0e8f6; margin-bottom:26px; overflow:hidden; }
+.account-preview-art { position:absolute; right:-60px; top:-100px; width:340px; height:340px; border:38px solid #e6d9ef; border-radius:50%; pointer-events:none; }
+.account-profile-preview > img { width:82px; height:82px; border-radius:50%; border:4px solid #fff; position:relative; }
+.account-profile-preview > div:not(.account-preview-art) { position:relative; flex:1; }
+.account-profile-preview span { font-size:8px; letter-spacing:1.3px; color:#a68bb7; }
+.account-profile-preview h2 { font-size:23px; font-weight:600; margin:10px 0 6px; }
+.account-profile-preview p { font-size:11px; color:#a28caf; }
+.account-profile-preview > button { position:relative; font-size:11px; padding:10px 16px; background:#ffffffa0; border:1px solid #fff; border-radius:10px; }
+.account-form { padding:32px; gap:26px; }
+.account-form h2 { display:flex; align-items:center; justify-content:space-between; padding-bottom:20px; border-bottom:1px solid #f1eaf5; }
+.account-form h2 small { font-size:9px; font-weight:500; color:#b5a0c2; }
+.account-form input, .account-form textarea { padding:15px; border-radius:11px; }
+.account-form input:focus, .account-form textarea:focus { border-color:#b496ca; box-shadow:0 0 0 3px #f5eff9; }
+.account-form-footer { padding-top:22px; border-top:1px solid #f1eaf5; }
+.account-form-footer .primary { background:#9672b1; padding:14px 24px; }
+@media(max-width:600px) { .account-profile-preview { padding:24px 20px; flex-wrap:wrap; } .account-form { padding:22px; } }
+@media(max-width:600px) { .account-panel { padding:20px; } .account-form { grid-template-columns:1fr; } .account-row { align-items:flex-start; flex-wrap:wrap; } .account-form-footer { flex-wrap:wrap; } }

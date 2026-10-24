@@ -1,0 +1,25 @@
+.one-mark {
+  --one-mark-width: 16px;
+  --one-mark-height: 25px;
+  display: inline-block;
+  position: relative;
+  width: var(--one-mark-width);
+  height: var(--one-mark-height);
+  flex: 0 0 var(--one-mark-width);
+  overflow: hidden;
+  vertical-align: middle;
+  margin-inline: 5px;
+}
+.one-mark > img {
+  position: absolute;
+  width: 300% !important;
+  max-width: none !important;
+  height: auto !important;
+  left: -100%;
+  top: -40%;
+  object-fit: contain;
+  border: 0 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+.one-name { display:inline-flex; align-items:center; gap:3px; }

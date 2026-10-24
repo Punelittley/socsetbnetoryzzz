@@ -1,0 +1,10 @@
+{
+  "description": "This web application enhances social networking with a visually appealing interface, featuring customizable profiles, engaging messaging animations, and a seamless music experience across pages.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

@@ -1,0 +1,18 @@
+.local-media-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 20px; background: #10101cb8; backdrop-filter: blur(12px); }
+.local-media-dialog { position: relative; width: min(100%, 480px); max-height: 90dvh; overflow: auto; padding: 36px; border-radius: 24px; background: #fff; color: #272238; box-shadow: 0 24px 100px #0003; }
+.local-media-close { position: absolute; top: 12px; right: 18px; font-size: 26px; }
+.local-media-eyebrow { font-size: 10px; letter-spacing: .15em; color: #8562c5; font-weight: 700; }
+.local-media-dialog h2 { margin: 14px 0 8px; font-size: 25px; }
+.local-media-dialog p { font-size: 13px; line-height: 1.6; color: #797386; }
+.local-media-video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; margin: 18px 0; background: #23202f; transform: scaleX(-1); }
+.local-media-recording { padding: 28px 0; font-size: 36px; font-variant-numeric: tabular-nums; text-align: center; }
+.local-media-recording small { display: block; font-size: 12px; color: #797386; margin-top: 8px; }
+.local-media-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #db456b; margin-right: 12px; }
+.local-media-dialog audio { width: 100%; margin-bottom: 12px; }
+.local-media-notice { padding: 14px; border-radius: 12px; background: #f5f1fb; }
+.local-media-dialog .local-media-error { color: #aa2948; }
+.local-media-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; align-items: center; }
+.local-media-actions button, .local-media-actions a { padding: 10px 14px; border-radius: 10px; background: #f1edf7; color: #61438e; font-size: 12px; cursor: pointer; }
+.local-media-actions .primary { background: #8860cb; color: #fff; }
+.inbox-voice-audio { max-width: 100%; width: 270px; }
+.inbox-local-notice { padding: 7px 18px; font-size: 11px; color: #847691; background: #f8f5fc; }

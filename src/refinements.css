@@ -1,0 +1,110 @@
+:root {
+  --surface: #fff;
+  --surface-soft: #f7f6fa;
+  --ink: #25212f;
+  --muted: #81788e;
+  --accent: #7954c9;
+  --border-soft: #ebe7f1;
+}
+body { background: #faf9fc; }
+.nav-uploaded-icon { object-fit:contain; width:34px; height:34px; }
+.side-nav-btn:not(.active) .nav-uploaded-icon { filter:saturate(.5); }
+.account-page button,.account-page input,.account-page textarea { min-height:42px; }
+@media(max-width:700px) {
+  .app-shell .header { height:auto !important; min-height:66px; padding:10px 12px !important; }
+  .header .header-inner { flex-wrap:wrap; gap:10px !important; min-width:0; }
+  .header .header-search-bar { min-width:0; flex:1; }
+  .header .header-create-btn { padding:9px; min-width:36px; }
+  .header .header-create-btn > span { display:none; }
+  .header .header-caption,.header .header-divider { display:none; }
+  .left-sidebar .static-side-nav.icon-only-sidebar { max-height:calc(100dvh - 110px); overflow-y:auto; overflow-x:hidden; scrollbar-width:none; }
+  .nav-uploaded-icon { width:30px; height:30px; }
+}
+.music-studio[hidden] { display: none !important; }
+.layout[hidden] { display: none !important; }
+.header { height: 76px !important; background: rgba(255,255,255,.92) !important; border-bottom-color: var(--border-soft) !important; box-shadow: none !important; }
+.header-inner { gap: 32px !important; }
+.header-search-bar { max-width: 480px !important; background: var(--surface-soft) !important; border-color: transparent !important; border-radius: 14px !important; }
+.header-create-btn { background: var(--ink) !important; border-radius: 12px !important; }
+.left-sidebar { top: 96px !important; }
+.static-side-nav.icon-only-sidebar { border-color: var(--border-soft) !important; box-shadow: none !important; }
+.site-footer { margin-top: 64px !important; }
+.global-music-player { position: fixed !important; bottom: 16px !important; left: 50% !important; transform: translateX(-50%) !important; width: min(960px,calc(100% - 48px)) !important; margin: 0 !important; z-index: 1200 !important; padding: 16px 24px !important; background: rgba(255,255,255,.96) !important; backdrop-filter: blur(24px); box-shadow: 0 10px 50px #30204420 !important; border-radius: 20px !important; }
+.global-music-player .player-copy { min-width: 180px; }
+.global-music-player .player-copy strong { font-size: 13px; }
+.global-music-player .player-copy small { font-size: 10px; }
+.has-music-player { padding-bottom: 110px; }
+.profile-hero-card { border-radius: 24px !important; box-shadow: none !important; border-color: var(--border-soft) !important; }
+.profile-cover { height: 270px !important; }
+.profile-details-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; margin: 24px 0; }
+.profile-detail-card { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 20px; padding: 26px; }
+.detail-eyebrow { display: block; font-size: 9px; letter-spacing: 1.6px; color: var(--muted); font-weight: 650; }
+.profile-detail-card h3 { font-size: 19px; font-weight: 650; letter-spacing: -.5px; margin: 16px 0 10px; }
+.profile-detail-card p { font-size: 12px; line-height: 1.9; color: var(--muted); }
+.profile-detail-card > p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.profile-section-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+.profile-section-heading h3 { margin:0; font-size:15px; letter-spacing:-.3px; }
+.profile-section-heading button { color:var(--muted); font-size:10px; padding:0; }
+.profile-section-heading button:hover { color:var(--accent); }
+.profile-unfilled { color:var(--muted); }
+.profile-facts { display:flex; flex-direction:column; gap:16px; margin:0; }
+.profile-facts > div { display:grid; grid-template-columns:75px minmax(0,1fr); gap:12px; font-size:11px; line-height:1.6; }
+.profile-facts dt { color:var(--muted); }
+.profile-facts dd { margin:0; overflow-wrap:anywhere; color:var(--ink); }
+.profile-edit-form small,.profile-editor-note { font-size:10px; color:var(--muted); line-height:1.7; }
+.profile-modal-card { max-height:calc(100dvh - 48px) !important; overflow:auto !important; }
+.profile-interest-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 20px; }
+.profile-interest-chips span { background: var(--surface-soft); padding: 7px 11px; border-radius: 8px; font-size: 10px; color: var(--accent); }
+.calls-page { max-width: 1000px; margin: auto; }
+.calls-heading { display: flex; justify-content: space-between; align-items: center; padding: 36px; background: #eee8f7; border-radius: 24px; margin-bottom: 28px; }
+.calls-heading h2 { font-size: clamp(26px,4vw,40px); letter-spacing: -1.5px; font-weight: 600; margin: 16px 0 12px; }
+.calls-heading p { color: var(--muted); font-size: 12px; }
+.calls-heading-icon { width: 88px; height: 88px; border-radius: 28px; background: #ffffff90; display: grid; place-items: center; color: var(--accent); transform: rotate(-12deg); margin: 0 24px; }
+.calls-contact-list { border: 1px solid var(--border-soft); border-radius: 20px; background: var(--surface); padding: 0 24px; }
+.calls-contact-list .call-row { padding: 21px 0; border-bottom: 1px solid var(--border-soft); }
+.calls-contact-list .call-row:last-child { border: none; }
+.calls-contact-list .portrait img { width: 46px; height: 46px; border-radius: 50%; }
+.calls-contact-list .call-row strong { font-size: 13px; color: var(--ink); }
+.calls-contact-list .call-row small { font-size: 10px; color: var(--muted); margin-top: 6px; }
+.call-start-button { display: flex; align-items: center; gap: 9px; background: var(--surface-soft); border: 1px solid var(--border-soft); padding: 11px 15px !important; border-radius: 10px; font-size: 11px !important; color: var(--accent) !important; }
+.calls-demo-note { font-size: 10px; color: var(--muted); margin: 20px 0; line-height: 1.8; }
+.calls-modal-backdrop { position: fixed; inset: 0; z-index: 1400; background: #21182f65; backdrop-filter: blur(10px); display: grid; place-items: center; padding: 20px; }
+.calls-dialog { width: min(100%,390px); padding: 36px; border-radius: 28px; background: var(--surface); text-align: center; }
+.calls-dialog > img { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px; }
+.calls-dialog h3 { font-size: 21px; }
+.calls-dialog p { font-size: 12px; line-height: 1.9; color: var(--muted); margin: 18px 0 24px; }
+.calls-dialog .primary { width: 100%; justify-content: center; }
+.calls-dismiss { margin-top: 16px; color: var(--muted); font-size: 12px; }
+.circle-recorder-studio { animation: recorder-reveal .3s ease-out both !important; }
+.circle-lens-frame { animation: lens-reveal .6s cubic-bezier(.22,1,.36,1) both !important; }
+.circle-control-dock { animation: dock-reveal .5s .12s ease-out both !important; }
+.circle-lens-frame.is-recording { box-shadow: 0 0 0 12px #8c5cc515,0 0 0 26px #8c5cc508 !important; transition: box-shadow .4s; }
+.circle-lens-frame.is-recording .circle-lens-viewport { animation: recording-breathe 2s ease-in-out infinite; }
+@keyframes recorder-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lens-reveal { from { opacity: 0; transform: translateY(45px) scale(.68); filter: blur(8px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+@keyframes dock-reveal { from { opacity: 0; translate: 0 20px; } to { opacity: 1; translate: 0 0; } }
+@keyframes recording-breathe { 50% { box-shadow: 0 0 30px #9561cc30; } }
+@media(max-width:700px) {
+  .layout,.layout.focused-layout { grid-template-columns: 48px minmax(0,1fr) !important; gap: 10px !important; padding: 0 8px !important; }
+  .layout > .right-sidebar { display: none !important; }
+  .layout > .left-sidebar { display: flex !important; width: 48px !important; top: 82px !important; }
+  .left-sidebar .static-side-nav.icon-only-sidebar { display: flex !important; width: 48px !important; padding: 5px 3px !important; gap: 3px !important; }
+  .static-side-nav.icon-only-sidebar .side-nav-btn { width: 40px !important; height: 40px !important; }
+  .left-sidebar .create-button { display: grid !important; width: 44px !important; height: 44px !important; }
+  .header { padding: 0 14px !important; height: 68px !important; }
+  .header-inner { gap: 12px !important; }
+  .global-music-player { width: calc(100% - 20px) !important; bottom: 10px !important; gap: 8px !important; padding: 12px !important; }
+  .global-music-player .player-copy { min-width: 0; }
+  .global-music-player .player-copy small { font-size: 8px; }
+  .global-music-player .player-progress { max-width: none; flex: 1; }
+  .profile-details-grid { grid-template-columns: 1fr; }
+  .profile-cover { height: 190px !important; }
+  .calls-heading { padding: 26px; }
+  .calls-heading-icon { display: none; }
+  .calls-contact-list { padding: 0 16px; }
+  .call-start-button span { display: none; }
+  .calls-page .inbox-search { margin: 0; width: 100%; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .circle-recorder-studio,.circle-lens-frame,.circle-control-dock,.circle-lens-frame.is-recording .circle-lens-viewport { animation: none !important; }
+}

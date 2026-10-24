@@ -1,0 +1,70 @@
+/* Conversation attachments */
+.chat-attachment-image { display: block; width: min(100%, 320px); max-height: 280px; border-radius: 12px; object-fit: contain; }
+.chat-file-link { display: flex; align-items: center; gap: 8px; max-width: 280px; overflow-wrap: anywhere; padding: 10px 0; color: #8962b6; }
+.chat-attachment-error { color: #ac4965; font-size: 12px; }
+.inbox-composer textarea { flex: 1; min-width: 0; }
+.inbox-header-actions { margin-left: auto; }
+.header-login-button { border: 1px solid #e6ddef; border-radius: 12px; padding: 10px 20px; color: #8b64ae; font-weight: 650; }
+.post-image:hover > img, .post:hover .post-image > img { transform: none !important; }
+.post-image .location { display: none; }
+
+/* Calls are a dedicated full-screen surface, not a dialog. */
+.netory-call-screen { position: fixed; inset: 0; z-index: 1100; overflow-y: auto; background: radial-gradient(ellipse at 20% 10%, #614579 0, transparent 55%), radial-gradient(ellipse at 90% 100%, #343c5c 0, transparent 50%), #171321; color: #fff; display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
+.netory-call-screen .local-media-dialog { width: min(100%, 820px); background: transparent; color: #fff; box-shadow: none; border-radius: 0; max-height: none; overflow: visible; text-align: center; padding: 32px; }
+.netory-call-screen .local-media-eyebrow { color: #c9acdf; }
+.netory-call-screen h2 { font-size: clamp(28px, 4vw, 42px); letter-spacing: -1px; }
+.netory-call-screen .local-media-dialog p { color: #c4b7ce; }
+.netory-call-screen .local-media-video { max-height: 48dvh; width: 100%; object-fit: cover; border: 1px solid #ffffff20; border-radius: 24px; background: #13111b; }
+.netory-call-screen .local-media-notice { background: #ffffff08; border: 1px solid #ffffff12; max-width: 540px; margin: 22px auto; }
+.netory-call-screen .local-media-actions { justify-content: center; }
+.netory-call-screen .local-media-actions button { background: #ffffff15; color: #fff; padding: 16px 22px; border-radius: 50px; border: 1px solid #ffffff20; }
+.netory-call-screen .local-media-actions button:last-child { background: #c34e6b; border-color: transparent; }
+.netory-call-screen .local-media-close { position: fixed; top: 24px; right: 32px; color: #ddd; }
+.call-person-monogram { display: grid; place-items: center; margin: 42px auto 30px; width: 150px; height: 150px; border-radius: 50%; border: 1px solid #d9b4ff50; background: linear-gradient(135deg, #b99bcf, #5f487f); box-shadow: 0 0 0 20px #ffffff03, 0 0 0 40px #ffffff02; font-size: 42px; }
+
+/* Community overview */
+.comm-hero-profile-row { gap: 24px; align-items: center; }
+.comm-hero-profile-row > .comm-header-join-btn { margin-left: auto; flex-shrink: 0; }
+.community-overview { display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; margin: 24px 0; }
+.community-info-card, .community-photo-section { padding: 26px; background: #fff; border: 1px solid #eee8f2; border-radius: 18px; }
+.community-info-card h3 { font-size: 20px; font-weight: 600; letter-spacing: -.5px; margin: 14px 0; }
+.community-info-card p { color: #9b87ac; font-size: 12px; line-height: 1.85; }
+.community-rules { padding-top: 16px; border-top: 1px solid #f1eaf6; }
+.community-info-card small { font-size: 10px; color: #b3a3bd; }
+.community-quick-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.community-quick-cards > button { text-align: left; background: #f3edf8; border: 1px solid #e9deef; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 10px; }
+.community-quick-cards > button:last-child { grid-column: 1/-1; background: #fff; }
+.community-quick-cards strong { font-size: 27px; font-weight: 600; color: #76518f; }
+.community-quick-cards span { font-size: 12px; color: #8c759d; }
+.community-quick-cards small { font-size: 10px; line-height: 1.7; color: #a491b1; }
+.community-avatar-stack { display: flex; padding-left: 6px; }
+.community-avatar-stack img { width: 28px; height: 28px; border: 2px solid #f3edf8; border-radius: 50%; margin-left: -6px; }
+.community-photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+.community-photo-grid img { width: 100%; aspect-ratio: 1; border-radius: 12px; }
+.comm-inner-tabs-row { overflow-x: auto; }
+.comm-tab-btn { white-space: nowrap; }
+
+/* Public person page */
+.person-profile-page { background: #fff; border: 1px solid #ece5f2; border-radius: 20px; overflow: hidden; margin: 16px 0; padding-bottom: 28px; }
+.person-back { margin: 18px 24px; font-size: 12px; color: #9174a4; }
+.person-profile-cover { height: 200px; background: radial-gradient(ellipse at 80% 60%, #d7c3e9, transparent 65%), linear-gradient(135deg, #ece5f4, #dfd8cd); }
+.person-profile-identity { display: flex; align-items: end; justify-content: space-between; margin: -48px 32px 20px; position: relative; }
+.person-profile-identity img { width: 110px; height: 110px; border: 6px solid #fff; border-radius: 50%; }
+.person-profile-identity .primary { width: auto; background: #9972b5; }
+.person-profile-page h1 { margin: 0 32px; font-size: 29px; font-weight: 600; letter-spacing: -.8px; }
+.person-profile-meta { margin: 12px 32px 24px; color: #a28daf; font-size: 12px; }
+.person-profile-sections { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; margin: 0 32px; }
+.person-profile-sections section, .person-profile-wall { border: 1px solid #eee7f3; border-radius: 14px; padding: 24px; }
+.person-profile-page h2 { font-size: 15px; margin: 0 0 16px; }
+.person-profile-page p, .person-profile-page small { color: #a28daf; line-height: 1.8; }
+.person-profile-sections span { display: inline-block; padding: 6px 12px; border-radius: 20px; color: #a17fba; background: #f5eff9; margin-top: 12px; font-size: 11px; }
+.person-profile-wall { margin: 20px 32px 0; }
+@media (max-width: 700px) {
+  .community-overview, .person-profile-sections { grid-template-columns: 1fr; }
+  .comm-hero-profile-row { flex-wrap: wrap; }
+  .comm-hero-profile-row > .comm-header-join-btn { margin: 0 20px 20px; }
+  .netory-call-screen .local-media-dialog { padding: 16px 0; }
+  .inbox-composer { gap: 5px; padding-left: 8px; padding-right: 8px; }
+  .inbox-composer button { flex-shrink: 0; }
+  .person-profile-sections { margin: 0 18px; }
+}
