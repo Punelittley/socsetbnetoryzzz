@@ -232,6 +232,7 @@ export default function App() {
         .from("posts")
         .select("*, profiles(full_name, username, avatar_url, is_one_subscriber)")
         .order("created_at", { ascending: false })
+        .limit(30)
 
       if (!error && data && data.length > 0) {
         const mapped = data.map((p: any) => ({
@@ -380,6 +381,7 @@ export default function App() {
             loadSupabasePosts()
           } else {
             console.error("Ошибка сохранения публикации в Supabase:", error)
+            if (error.message) notify(error.message)
           }
         }
       } catch (err) {

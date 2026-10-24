@@ -42,6 +42,7 @@ export default function PostComments({
           .select("*, profiles(full_name, username, avatar_url, is_one_subscriber)")
           .eq("post_id", postId)
           .order("created_at", { ascending: true })
+          .limit(50)
 
         if (!error && data) {
           setComments(
