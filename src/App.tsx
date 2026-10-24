@@ -358,9 +358,11 @@ export default function App() {
     if (!auth) { nav("Сообщения"); return }
     const targetRecipient = recipient || "Александр Морозов"
     const currentList = threads[targetRecipient] || []
+    const now = new Date()
+    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
     const nextThreads = {
       ...threads,
-      [targetRecipient]: [...currentList, `circle:${clipUrl}`],
+      [targetRecipient]: [...currentList, `[${timeStr}] circle:${clipUrl}`],
     }
     saveThreads(nextThreads)
     notify(`Видеокружок отправлен в ЛС (${targetRecipient})`)

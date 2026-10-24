@@ -209,6 +209,17 @@ function CircleVideoMessage({ url }: { url: string }) {
   )
 }
 
+function parseMsg(raw: string, index = 0, total = 1) {
+  const match = raw.match(/^\[(\d{1,2}:\d{2})\]\s*([\s\S]*)$/)
+  if (match) {
+    return { time: match[1], body: match[2] }
+  }
+  const now = new Date()
+  const d = new Date(now.getTime() - Math.max(0, total - 1 - index) * 60000)
+  const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+  return { time, body: raw }
+}
+
 export function MessagesPage({
   recipient,
   onSelect,
@@ -353,17 +364,22 @@ export function MessagesPage({
               <span className="inbox-contact-copy">
                 <strong>
                   {p.name}
-                  <span>{threads[p.name]?.length ? "сейчас" : ""}</span>
+                  <span>
+                    {threads[p.name]?.length
+                      ? parseMsg(threads[p.name][threads[p.name].length - 1], threads[p.name].length - 1, threads[p.name].length).time
+                      : ""}
+                  </span>
                 </strong>
                 <small>
                   {(() => {
-                    const lastMsg =
+                    const lastRaw =
                       threads[p.name]?.[threads[p.name].length - 1]
-                    if (!lastMsg) return p.bio
-                    if (lastMsg.startsWith("circle:")) return "Видеокружок"
-                    if (lastMsg.startsWith("voice:")) return "Голосовое · локально"
-                    if (lastMsg.startsWith("file:")) return "Вложение · локально"
-                    return lastMsg
+                    if (!lastRaw) return p.bio
+                    const parsed = parseMsg(lastRaw, 0, 1).body
+                    if (parsed.startsWith("circle:")) return "Видеокружок"
+                    if (parsed.startsWith("voice:")) return "Голосовое сообщение"
+                    if (parsed.startsWith("file:")) return "Вложение"
+                    return parsed
                   })()}
                 </small>
               </span>
@@ -452,43 +468,40 @@ export function MessagesPage({
               </div>
             </div>
           ) : (
-            list.map((text, i) => {
-              if (text.startsWith("file:")) {
+            list.map((rawText, i) => {
+              const { time, body } = parseMsg(rawText, i, list.length)
+              if (body.startsWith("file:")) {
                 try {
-                  const attachment = JSON.parse(text.slice(5))
+                  const attachment = JSON.parse(body.slice(5))
                   if (typeof attachment.url !== "string" || !/^data:(image\/(png|jpeg|webp|gif);base64,|application\/octet-stream;base64,)/.test(attachment.url)) return null
                   return <div className="inbox-outgoing" key={i}>
                     {attachment.image && <img className="chat-attachment-image" src={attachment.url} alt={attachment.name} />}
                     <a className="chat-file-link" href={attachment.url} download={attachment.name}><ChatIcon name="clip" size={16} />{attachment.name}</a>
-                    <small>Локально · не доставлено</small>
+                    <small>{time} <span>✓✓</span></small>
                   </div>
                 } catch { return null }
               }
-              if (text.startsWith("voice:data:audio/")) {
+              if (body.startsWith("voice:data:audio/")) {
                 return (
                   <div className="inbox-outgoing" key={i}>
-                    <audio className="inbox-voice-audio" controls preload="metadata" src={text.slice(6)} aria-label="Голосовое сообщение" />
-                    <small>Сохранено локально · не доставлено</small>
+                    <audio className="inbox-voice-audio" controls preload="metadata" src={body.slice(6)} aria-label="Голосовое сообщение" />
+                    <small>{time} <span>✓✓</span></small>
                   </div>
                 )
               }
-              if (text.startsWith("circle:")) {
-                const videoUrl = text.replace("circle:", "")
+              if (body.startsWith("circle:")) {
+                const videoUrl = body.replace("circle:", "")
                 return (
                   <div className="inbox-outgoing inbox-circle-outgoing" key={i}>
                     <CircleVideoMessage url={videoUrl} />
-                    <small>
-                      В этой сессии <span>✓</span>
-                    </small>
+                    <small>{time} <span>✓✓</span></small>
                   </div>
                 )
               }
               return (
                 <div className="inbox-outgoing" key={i}>
-                  <p>{text}</p>
-                  <small>
-                    В этой сессии <span>✓</span>
-                  </small>
+                  <p>{body}</p>
+                  <small>{time} <span>✓✓</span></small>
                 </div>
               )
             })
@@ -514,8 +527,10 @@ export function MessagesPage({
                 reader.onerror = reject
                 reader.readAsDataURL(safeFile)
               })
+              const now = new Date()
+              const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
               const latest = threadsRef.current
-              updateThreads({ ...latest, [target]: [...(latest[target] || []), `file:${JSON.stringify({ name: file.name, url: data, image })}`] })
+              updateThreads({ ...latest, [target]: [...(latest[target] || []), `[${timeStr}] file:${JSON.stringify({ name: file.name, url: data, image })}`] })
             } catch { setAttachmentError("Не удалось прочитать файл. Попробуйте снова.") }
             finally { setLoadingFile(false) }
           }} />
@@ -525,9 +540,11 @@ export function MessagesPage({
             onSubmit={(e) => {
               e.preventDefault()
               if (!draft.trim()) return
+              const now = new Date()
+              const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
               const next = {
                 ...threads,
-                [person.name]: [...list, draft.trim()],
+                [person.name]: [...list, `[${timeStr}] ${draft.trim()}`],
               }
               updateThreads(next)
               setDrafts({ ...drafts, [person.name]: "" })
@@ -576,7 +593,11 @@ export function MessagesPage({
         mode={mediaMode}
         recipient={person.name}
         onClose={() => setMediaMode(null)}
-        onSave={(data) => updateThreads({ ...threads, [person.name]: [...list, `voice:${data}`] })}
+        onSave={(data) => {
+          const now = new Date()
+          const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+          updateThreads({ ...threads, [person.name]: [...list, `[${timeStr}] voice:${data}`] })
+        }}
       />}
     </div>
   )
