@@ -3,8 +3,22 @@ import MusicPage from "./MusicPage"
 import GroupsPage from "./GroupsPage"
 import DirectoryCard from "../components/DirectoryCard"
 import LocalMediaDialog from "../components/LocalMediaDialog"
+import { supabase, isSupabaseConfigured } from "../lib/supabase"
 import "../components/DirectoryCard.css"
-const people = [
+
+export interface SocialPerson {
+  id: number | string
+  name: string
+  avatar?: string
+  bio: string
+  city: string
+  online: boolean
+  tag: string
+  mutual: number
+  isReal?: boolean
+}
+
+const defaultPeople: SocialPerson[] = [
   {
     name: "Анна Белова",
     id: 49,
@@ -60,7 +74,78 @@ const people = [
     mutual: 3,
   },
 ]
-const photo = (id: number) => `https://i.pravatar.cc/100?img=${id}`
+
+export function useSocialPeople(currentUserName = ""): SocialPerson[] {
+  const [peopleList, setPeopleList] = useState<SocialPerson[]>(defaultPeople)
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+
+    const loadUsers = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const myId = session?.user?.id
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: false })
+
+        if (!error && data) {
+          // Исключаем текущего авторизованного пользователя (себя)
+          const realUsers: SocialPerson[] = data
+            .filter((p: any) => {
+              if (myId && p.id === myId) return false
+              if (currentUserName && (p.username === currentUserName || p.full_name === currentUserName)) return false
+              return true
+            })
+            .map((p: any) => ({
+              id: p.id,
+              name: p.full_name || p.username || "Пользователь",
+              avatar: p.avatar_url || `https://i.pravatar.cc/100?u=${p.id}`,
+              bio: p.bio || "Участник Netory",
+              city: "Россия",
+              online: true,
+              tag: p.is_one_subscriber ? "One" : "Пользователь",
+              mutual: 0,
+              isReal: true,
+            }))
+
+          // Объединяем: сначала реальные пользователи из базы, затем демо
+          const combined = [
+            ...realUsers,
+            ...defaultPeople.filter((p) => !realUsers.some((u) => u.name.toLowerCase() === p.name.toLowerCase())),
+          ]
+          setPeopleList(combined)
+        }
+      } catch (err) {
+        console.error("Ошибка загрузки пользователей:", err)
+      }
+    }
+
+    loadUsers()
+
+    // Слушаем регистрацию новых пользователей через Supabase Realtime
+    const channel = supabase
+      .channel("profiles-realtime-friends-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        loadUsers()
+      })
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [currentUserName])
+
+  return peopleList
+}
+
+const photo = (id: number | string, customAvatar?: string) => {
+  if (customAvatar && (customAvatar.startsWith("http") || customAvatar.startsWith("data:"))) return customAvatar
+  if (typeof id === "string" && (id.startsWith("http") || id.startsWith("data:"))) return id
+  return `https://i.pravatar.cc/100?img=${typeof id === "number" ? id : 11}`
+}
 function ChatIcon({ name, size = 20 }: { name: string; size?: number }) {
   const shapes: Record<string, string> = {
     search: "m21 21-5-5M19 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
@@ -131,6 +216,8 @@ export function MessagesPage({
   threads: propThreads,
   onUpdateThreads,
   onOpenDonate,
+  onStartCall,
+  currentUserName,
 }: {
   recipient: string
   onSelect: (n: string) => void
@@ -138,7 +225,10 @@ export function MessagesPage({
   threads?: Record<string, string[]>
   onUpdateThreads?: (next: Record<string, string[]>) => void
   onOpenDonate?: (recipientName: string, recipientAvatar?: string) => void
+  onStartCall?: (name: string, avatar: string, isVideo: boolean) => void
+  currentUserName?: string
 }) {
+  const people = useSocialPeople(currentUserName)
   const [search, setSearch] = useState("")
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [filter, setFilter] = useState("Все")
@@ -302,7 +392,7 @@ export function MessagesPage({
             <ChatIcon name="back" />
           </button>
           <span className="portrait">
-            <img src={photo(person.id)} alt="" />
+            <img src={photo(person.id, person.avatar)} alt="" />
             {person.online && <i />}
           </span>
           <div>
@@ -310,15 +400,31 @@ export function MessagesPage({
             <small>{person.online ? "Сейчас в сети" : "Был(а) недавно"}</small>
           </div>
           <div className="inbox-header-actions">
-            <button type="button" className="inbox-video" title="Аудиозвонок — проверка микрофона" aria-label="Аудиозвонок — проверка микрофона" onClick={() => setMediaMode("audio")}>
+            <button
+              type="button"
+              className="inbox-video"
+              title="Аудиозвонок"
+              aria-label="Аудиозвонок"
+              onClick={() => {
+                if (onStartCall) onStartCall(person.name, photo(person.id, person.avatar), false)
+              }}
+            >
               <ChatIcon name="phone" />
             </button>
-            <button type="button" className="inbox-video" title="Видеозвонок — проверка устройств" aria-label="Видеозвонок — проверка устройств" onClick={() => setMediaMode("video")}>
+            <button
+              type="button"
+              className="inbox-video"
+              title="Видеозвонок"
+              aria-label="Видеозвонок"
+              onClick={() => {
+                if (onStartCall) onStartCall(person.name, photo(person.id, person.avatar), true)
+              }}
+            >
               <ChatIcon name="video" />
             </button>
           </div>
         </div>
-        <div className="inbox-local-notice">Локальная переписка · сообщения не доставляются собеседнику</div>
+        <div className="inbox-local-notice">Прямые WebRTC HD звонки и защищённая переписка Netory</div>
         <div className="inbox-history">
           <div className="inbox-date">Сегодня</div>
           {!list.length ? (
@@ -479,22 +585,25 @@ export function FriendsPage({
   followed,
   onFollow,
   onWrite,
+  currentUserName,
 }: {
   followed: string[]
   onFollow: (n: string) => void
   onWrite: (n: string) => void
+  currentUserName?: string
 }) {
+  const people = useSocialPeople(currentUserName)
   const [filter, setFilter] = useState("Все люди"),
     [search, setSearch] = useState(""),
     [city, setCity] = useState("Все города"),
     [interest, setInterest] = useState("Все интересы")
-  const [selectedPerson, setSelectedPerson] = useState<(typeof people)[number] | null>(null)
+  const [selectedPerson, setSelectedPerson] = useState<SocialPerson | null>(null)
   if (selectedPerson) return (
     <section className="person-profile-page">
       <button className="person-back" onClick={() => setSelectedPerson(null)}>← Все люди</button>
       <div className={`person-profile-cover directory-cover--${selectedPerson.tag === "Музыка" ? "music" : "design"}`} />
       <div className="person-profile-identity">
-        <img src={photo(selectedPerson.id)} alt={selectedPerson.name} />
+        <img src={photo(selectedPerson.id, selectedPerson.avatar)} alt={selectedPerson.name} />
         <button className="primary" onClick={() => onFollow(selectedPerson.name)}>{followed.includes(selectedPerson.name) ? "Отписаться" : "Подписаться"}</button>
       </div>
       <h1>{selectedPerson.name}</h1>
@@ -569,7 +678,7 @@ export function FriendsPage({
             key={p.name}
             title={p.name}
             description={p.bio}
-            avatar={photo(p.id)}
+            avatar={photo(p.id, p.avatar)}
             category={p.tag}
             tone={
               p.tag === "Музыка"
@@ -603,13 +712,14 @@ export function UtilityPage({
   page,
   onWrite,
   onStartCall,
+  currentUserName,
 }: {
   page: string
   onWrite: (name: string) => void
   onStartCall?: (name: string, avatar: string, isVideo: boolean, isTestEcho?: boolean) => void
+  currentUserName?: string
 }) {
-  const [call, setCall] = useState("")
-  const [callMode, setCallMode] = useState<"audio" | "video">("audio")
+  const people = useSocialPeople(currentUserName)
   const [filter, setFilter] = useState("Все контакты")
   const [search, setSearch] = useState("")
   if (page === "Музыка") return <MusicPage />
@@ -681,7 +791,7 @@ export function UtilityPage({
         {contacts.map((p) => (
           <div className="call-row" key={p.name}>
             <span className="portrait">
-              <img src={photo(p.id)} alt="" />
+              <img src={photo(p.id, p.avatar)} alt="" />
               {p.online && <i />}
             </span>
             <div>
@@ -694,8 +804,7 @@ export function UtilityPage({
               className="call-start-button"
               aria-label={`Аудиозвонок: ${p.name}`}
               onClick={() => {
-                if (onStartCall) onStartCall(p.name, photo(p.id), false)
-                else { setCallMode("audio"); setCall(p.name) }
+                if (onStartCall) onStartCall(p.name, photo(p.id, p.avatar), false)
               }}
             >
               <ChatIcon name="phone" size={18} />
@@ -705,8 +814,7 @@ export function UtilityPage({
               className="call-start-button"
               aria-label={`Позвонить: ${p.name}`}
               onClick={() => {
-                if (onStartCall) onStartCall(p.name, photo(p.id), true)
-                else { setCallMode("video"); setCall(p.name) }
+                if (onStartCall) onStartCall(p.name, photo(p.id, p.avatar), true)
               }}
             >
               <ChatIcon name="video" size={18} />
@@ -721,7 +829,6 @@ export function UtilityPage({
       <p className="calls-demo-note">
         Защищенные P2P звонки WebRTC · Бесплатные Google STUN серверы · Демонстрация экрана и живой звук.
       </p>
-      {call && <LocalMediaDialog mode={callMode} recipient={call} onClose={() => setCall("")} />}
     </section>
   )
 }

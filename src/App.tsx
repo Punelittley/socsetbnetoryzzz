@@ -720,6 +720,14 @@ export default function App() {
                       role: "Собеседник",
                     })
                   }
+                  onStartCall={(rName, rAvatar, isVideo) => {
+                    setActiveCall({
+                      recipientName: rName,
+                      recipientAvatar: rAvatar,
+                      isVideo,
+                    })
+                  }}
+                  currentUserName={name}
                 />
               ) : page === "Друзья" ? (
                 <FriendsPage
@@ -735,6 +743,7 @@ export default function App() {
                     setRecipient(n)
                     nav("Сообщения")
                   }}
+                  currentUserName={name}
                 />
               ) : page === "Группы" || ["Дизайн каждый день", "За пределами города", "Музыка внутри"].includes(page) ? (
                 <GroupsPage initialGroupId={page === "Группы" ? undefined : page} authenticated={auth} onRequireAuth={() => nav("Войти")} />
@@ -750,6 +759,7 @@ export default function App() {
               ) : page === "Музыка" ? null : page === "Звонки" ? (
                 <UtilityPage
                   page={page}
+                  currentUserName={name}
                   onWrite={(n) => {
                     setRecipient(n)
                     nav("Сообщения")

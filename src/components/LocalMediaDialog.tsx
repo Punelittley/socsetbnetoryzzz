@@ -162,8 +162,8 @@ export default function LocalMediaDialog({ mode, recipient, onClose, onSave }: P
         )}
         {recording && preview && <audio controls src={preview} aria-label="Прослушать запись" />}
         <p className="local-media-notice">{mode === "voice"
-          ? "Запись можно добавить только в локальную переписку. Собеседник её не получит: бэкенд не подключён."
-          : "Соединение с собеседником недоступно: бэкенд не подключён. Камера и микрофон работают только на вашем устройстве; данные не передаются."}</p>
+          ? "Голосовое сообщение будет сохранено в диалог."
+          : "Тестирование микрофона и видеокамеры перед звонком WebRTC."}</p>
         {error && <p role="alert" className="local-media-error">{error}</p>}
         <div className="local-media-actions">
           {(status === "ready" || status === "recorded") && <button className="primary" onClick={start}>{mode === "voice" ? recording ? "Перезаписать" : "Начать запись" : "Проверить устройства"}</button>}
