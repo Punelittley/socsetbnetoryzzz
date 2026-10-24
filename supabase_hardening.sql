@@ -14,7 +14,7 @@ alter table public.comments add constraint check_comment_text_length
 
 alter table public.messages drop constraint if exists check_message_content_length;
 alter table public.messages add constraint check_message_content_length 
-  check (char_length(trim(content)) > 0 and char_length(content) <= 2000);
+  check (char_length(trim(content)) > 0 and char_length(content) <= 200000);
 
 alter table public.profiles drop constraint if exists check_bio_length;
 alter table public.profiles add constraint check_bio_length 

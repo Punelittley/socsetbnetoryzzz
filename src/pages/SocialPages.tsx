@@ -210,14 +210,20 @@ function CircleVideoMessage({ url }: { url: string }) {
 }
 
 function parseMsg(raw: string, index = 0, total = 1) {
-  const match = raw.match(/^\[(\d{1,2}:\d{2})\]\s*([\s\S]*)$/)
+  let isIncoming = false
+  let clean = raw
+  if (clean.startsWith("in:")) {
+    isIncoming = true
+    clean = clean.slice(3)
+  }
+  const match = clean.match(/^\[(\d{1,2}:\d{2})\]\s*([\s\S]*)$/)
   if (match) {
-    return { time: match[1], body: match[2] }
+    return { isIncoming, time: match[1], body: match[2] }
   }
   const now = new Date()
   const d = new Date(now.getTime() - Math.max(0, total - 1 - index) * 60000)
   const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
-  return { time, body: raw }
+  return { isIncoming, time, body: clean }
 }
 
 export function MessagesPage({
@@ -375,11 +381,12 @@ export function MessagesPage({
                     const lastRaw =
                       threads[p.name]?.[threads[p.name].length - 1]
                     if (!lastRaw) return p.bio
-                    const parsed = parseMsg(lastRaw, 0, 1).body
-                    if (parsed.startsWith("circle:")) return "Видеокружок"
-                    if (parsed.startsWith("voice:")) return "Голосовое сообщение"
-                    if (parsed.startsWith("file:")) return "Вложение"
-                    return parsed
+                    const parsed = parseMsg(lastRaw, 0, 1)
+                    let text = parsed.body
+                    if (text.startsWith("circle:")) text = "Видеокружок"
+                    else if (text.startsWith("voice:")) text = "Голосовое сообщение"
+                    else if (text.startsWith("file:")) text = "Вложение"
+                    return parsed.isIncoming ? text : `Вы: ${text}`
                   })()}
                 </small>
               </span>
@@ -469,39 +476,40 @@ export function MessagesPage({
             </div>
           ) : (
             list.map((rawText, i) => {
-              const { time, body } = parseMsg(rawText, i, list.length)
+              const { isIncoming, time, body } = parseMsg(rawText, i, list.length)
+              const bubbleClass = isIncoming ? "inbox-incoming" : "inbox-outgoing"
               if (body.startsWith("file:")) {
                 try {
                   const attachment = JSON.parse(body.slice(5))
                   if (typeof attachment.url !== "string" || !/^data:(image\/(png|jpeg|webp|gif);base64,|application\/octet-stream;base64,)/.test(attachment.url)) return null
-                  return <div className="inbox-outgoing" key={i}>
+                  return <div className={bubbleClass} key={i}>
                     {attachment.image && <img className="chat-attachment-image" src={attachment.url} alt={attachment.name} />}
                     <a className="chat-file-link" href={attachment.url} download={attachment.name}><ChatIcon name="clip" size={16} />{attachment.name}</a>
-                    <small>{time} <span>✓✓</span></small>
+                    <small>{time} {!isIncoming && <span>✓✓</span>}</small>
                   </div>
                 } catch { return null }
               }
               if (body.startsWith("voice:data:audio/")) {
                 return (
-                  <div className="inbox-outgoing" key={i}>
+                  <div className={bubbleClass} key={i}>
                     <audio className="inbox-voice-audio" controls preload="metadata" src={body.slice(6)} aria-label="Голосовое сообщение" />
-                    <small>{time} <span>✓✓</span></small>
+                    <small>{time} {!isIncoming && <span>✓✓</span>}</small>
                   </div>
                 )
               }
               if (body.startsWith("circle:")) {
                 const videoUrl = body.replace("circle:", "")
                 return (
-                  <div className="inbox-outgoing inbox-circle-outgoing" key={i}>
+                  <div className={`${bubbleClass} ${isIncoming ? "inbox-circle-incoming" : "inbox-circle-outgoing"}`} key={i}>
                     <CircleVideoMessage url={videoUrl} />
-                    <small>{time} <span>✓✓</span></small>
+                    <small>{time} {!isIncoming && <span>✓✓</span>}</small>
                   </div>
                 )
               }
               return (
-                <div className="inbox-outgoing" key={i}>
+                <div className={bubbleClass} key={i}>
                   <p>{body}</p>
-                  <small>{time} <span>✓✓</span></small>
+                  <small>{time} {!isIncoming && <span>✓✓</span>}</small>
                 </div>
               )
             })
@@ -529,8 +537,25 @@ export function MessagesPage({
               })
               const now = new Date()
               const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+              const filePayload = `file:${JSON.stringify({ name: file.name, url: data, image })}`
               const latest = threadsRef.current
-              updateThreads({ ...latest, [target]: [...(latest[target] || []), `[${timeStr}] file:${JSON.stringify({ name: file.name, url: data, image })}`] })
+              updateThreads({ ...latest, [target]: [...(latest[target] || []), `[${timeStr}] ${filePayload}`] })
+
+              // Реальная доставка файла через Supabase
+              if (isSupabaseConfigured && person.id && typeof person.id === "string") {
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                  const myId = session?.user?.id
+                  if (myId) {
+                    supabase.from("messages").insert({
+                      sender_id: myId,
+                      receiver_id: person.id,
+                      content: filePayload,
+                    }).then(({ error }) => {
+                      if (error) console.error("Ошибка отправки файла в Supabase:", error)
+                    })
+                  }
+                })
+              }
             } catch { setAttachmentError("Не удалось прочитать файл. Попробуйте снова.") }
             finally { setLoadingFile(false) }
           }} />
@@ -540,14 +565,31 @@ export function MessagesPage({
             onSubmit={(e) => {
               e.preventDefault()
               if (!draft.trim()) return
+              const textToSend = draft.trim()
               const now = new Date()
               const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
               const next = {
                 ...threads,
-                [person.name]: [...list, `[${timeStr}] ${draft.trim()}`],
+                [person.name]: [...list, `[${timeStr}] ${textToSend}`],
               }
               updateThreads(next)
               setDrafts({ ...drafts, [person.name]: "" })
+
+              // Реальная доставка сообщения через Supabase
+              if (isSupabaseConfigured && person.id && typeof person.id === "string") {
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                  const myId = session?.user?.id
+                  if (myId) {
+                    supabase.from("messages").insert({
+                      sender_id: myId,
+                      receiver_id: person.id,
+                      content: textToSend,
+                    }).then(({ error }) => {
+                      if (error) console.error("Ошибка отправки сообщения в Supabase:", error)
+                    })
+                  }
+                })
+              }
             }}
           >
             <button
@@ -596,7 +638,24 @@ export function MessagesPage({
         onSave={(data) => {
           const now = new Date()
           const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
-          updateThreads({ ...threads, [person.name]: [...list, `[${timeStr}] voice:${data}`] })
+          const voicePayload = `voice:${data}`
+          updateThreads({ ...threads, [person.name]: [...list, `[${timeStr}] ${voicePayload}`] })
+
+          // Реальная доставка голосового через Supabase
+          if (isSupabaseConfigured && person.id && typeof person.id === "string") {
+            supabase.auth.getSession().then(({ data: { session } }) => {
+              const myId = session?.user?.id
+              if (myId) {
+                supabase.from("messages").insert({
+                  sender_id: myId,
+                  receiver_id: person.id,
+                  content: voicePayload,
+                }).then(({ error }) => {
+                  if (error) console.error("Ошибка отправки голосового в Supabase:", error)
+                })
+              }
+            })
+          }
         }}
       />}
     </div>

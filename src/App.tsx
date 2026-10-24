@@ -160,7 +160,13 @@ export default function App() {
     [draft, setDraft] = useState(""),
     [liked, setLiked] = useState<(number | string)[]>([]),
     [saved, setSaved] = useState<(number | string)[]>([]),
-    [followed, setFollowed] = useState<string[]>([]),
+    [followed, setFollowed] = useState<string[]>(() => {
+      try {
+        return JSON.parse(localStorage.getItem("netory-followed") || "[]")
+      } catch {
+        return []
+      }
+    }),
     [query, setQuery] = useState(""),
     [auth, setAuth] = useState(false),
     [name, setName] = useState("Алексей"),
@@ -344,6 +350,158 @@ export default function App() {
     }
   })
 
+  const threadsRef = useRef(threads)
+  threadsRef.current = threads
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("netory-followed", JSON.stringify(followed))
+    } catch {}
+  }, [followed])
+
+  // Синхронизация и Realtime доставка сообщений через Supabase
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+
+    let channel: ReturnType<typeof supabase.channel> | null = null
+
+    const initMessagesSync = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const myId = session?.user?.id
+      if (!myId) return
+
+      // Загружаем всю историю сообщений текущего пользователя
+      try {
+        const { data: rows } = await supabase
+          .from("messages")
+          .select("*")
+          .or(`sender_id.eq.${myId},receiver_id.eq.${myId}`)
+          .order("created_at", { ascending: true })
+
+        if (rows && rows.length > 0) {
+          const { data: profiles } = await supabase.from("profiles").select("id, username, full_name")
+          const profileMap = new Map<string, string>()
+          profiles?.forEach((p) => {
+            profileMap.set(p.id, p.full_name || p.username || "Пользователь")
+          })
+
+          const updated = { ...threadsRef.current }
+          for (const row of rows) {
+            const isMine = row.sender_id === myId
+            const peerId = isMine ? row.receiver_id : row.sender_id
+            const peerName = profileMap.get(peerId) || "Собеседник"
+
+            const d = new Date(row.created_at)
+            const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+            const clean = row.content.replace(/^in:(\[\d{1,2}:\d{2}\]\s*)?/, "").replace(/^\[\d{1,2}:\d{2}\]\s*/, "")
+            const item = isMine ? `[${time}] ${clean}` : `in:[${time}] ${clean}`
+
+            if (!updated[peerName]) {
+              updated[peerName] = []
+            }
+            if (!updated[peerName].includes(item)) {
+              updated[peerName].push(item)
+            }
+          }
+          setThreads(updated)
+          try {
+            sessionStorage.setItem("netory-threads", JSON.stringify(updated))
+          } catch {}
+        }
+      } catch (e) {
+        console.error("Ошибка загрузки сообщений из Supabase:", e)
+      }
+
+      // Слушаем входящие и исходящие сообщения в реальном времени
+      channel = supabase
+        .channel("supabase-realtime-messages-sync")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "messages" },
+          async (payload) => {
+            const row = payload.new as {
+              id: string
+              sender_id: string
+              receiver_id: string
+              content: string
+              created_at: string
+            }
+
+            if (row.sender_id !== myId && row.receiver_id !== myId) return
+
+            const isMine = row.sender_id === myId
+            const peerId = isMine ? row.receiver_id : row.sender_id
+
+            let peerName = "Собеседник"
+            const { data: p } = await supabase
+              .from("profiles")
+              .select("username, full_name")
+              .eq("id", peerId)
+              .maybeSingle()
+            if (p) {
+              peerName = p.full_name || p.username || "Собеседник"
+            }
+
+            const d = new Date(row.created_at)
+            const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+            const clean = row.content.replace(/^in:(\[\d{1,2}:\d{2}\]\s*)?/, "").replace(/^\[\d{1,2}:\d{2}\]\s*/, "")
+            const item = isMine ? `[${time}] ${clean}` : `in:[${time}] ${clean}`
+
+            const cur = threadsRef.current
+            const curList = cur[peerName] || []
+            const exists = curList.some((m) => m === item || (m.includes(clean) && m.includes(time)))
+
+            if (!exists) {
+              const next = {
+                ...cur,
+                [peerName]: [...curList, item],
+              }
+              setThreads(next)
+              try {
+                sessionStorage.setItem("netory-threads", JSON.stringify(next))
+              } catch {}
+            }
+
+            // Уведомление для входящих сообщений
+            if (!isMine) {
+              const preview = clean.startsWith("voice:")
+                ? "Голосовое сообщение"
+                : clean.startsWith("circle:")
+                ? "Видеокружок"
+                : clean.startsWith("file:")
+                ? "Вложение"
+                : clean
+              notify(`💬 ${peerName}: ${preview.slice(0, 40)}`)
+
+              try {
+                const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+                const osc = ctx.createOscillator()
+                const gain = ctx.createGain()
+                osc.type = "sine"
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime)
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15)
+                gain.gain.setValueAtTime(0.12, ctx.currentTime)
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
+                osc.connect(gain)
+                gain.connect(ctx.destination)
+                osc.start()
+                osc.stop(ctx.currentTime + 0.3)
+              } catch {}
+            }
+          }
+        )
+        .subscribe()
+    }
+
+    initMessagesSync()
+
+    return () => {
+      if (channel) {
+        channel.unsubscribe()
+      }
+    }
+  }, [auth])
+
   const saveThreads = (next: Record<string, string[]>) => {
     if (!auth) { nav("Сообщения"); return }
     setThreads(next)
@@ -354,15 +512,16 @@ export default function App() {
     }
   }
 
-  const handlePublishCircle = (clipUrl: string) => {
+  const handlePublishCircle = async (clipUrl: string) => {
     if (!auth) { nav("Сообщения"); return }
     const targetRecipient = recipient || "Александр Морозов"
     const currentList = threads[targetRecipient] || []
     const now = new Date()
     const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+    const circleMsg = `circle:${clipUrl}`
     const nextThreads = {
       ...threads,
-      [targetRecipient]: [...currentList, `[${timeStr}] circle:${clipUrl}`],
+      [targetRecipient]: [...currentList, `[${timeStr}] ${circleMsg}`],
     }
     saveThreads(nextThreads)
     notify(`Видеокружок отправлен в ЛС (${targetRecipient})`)
@@ -370,6 +529,29 @@ export default function App() {
       nav("Сообщения")
     }
     closeCircleRecorder()
+
+    // Доставка кружка через Supabase в базу данных
+    if (isSupabaseConfigured) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const myId = session?.user?.id
+        if (myId) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, username, full_name")
+          const peer = profiles?.find((p) => (p.full_name || p.username) === targetRecipient)
+          if (peer?.id) {
+            await supabase.from("messages").insert({
+              sender_id: myId,
+              receiver_id: peer.id,
+              content: circleMsg,
+            })
+          }
+        }
+      } catch (err) {
+        console.error("Ошибка отправки кружка в Supabase:", err)
+      }
+    }
   }
   const publish = async (image = "") => {
     if (!auth) { nav("Войти"); return }
