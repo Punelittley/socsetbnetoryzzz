@@ -55,6 +55,9 @@ export default function AuthPage({ registration, onNavigate, onComplete }: Props
           if (error.message.includes('already registered')) {
             throw new Error('Пользователь с такой электронной почтой уже существует. Попробуйте войти.')
           }
+          if (error.message.toLowerCase().includes('rate limit')) {
+            throw new Error('Превышен лимит отправки подтверждающих писем Supabase. Отключите «Confirm email» в настройках Supabase (Authentication -> Providers -> Email), чтобы создавать аккаунты мгновенно.')
+          }
           throw error
         }
 
