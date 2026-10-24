@@ -602,9 +602,11 @@ export function FriendsPage({
 export function UtilityPage({
   page,
   onWrite,
+  onStartCall,
 }: {
   page: string
   onWrite: (name: string) => void
+  onStartCall?: (name: string, avatar: string, isVideo: boolean, isTestEcho?: boolean) => void
 }) {
   const [call, setCall] = useState("")
   const [callMode, setCallMode] = useState<"audio" | "video">("audio")
@@ -624,11 +626,34 @@ export function UtilityPage({
         <div>
           <span className="detail-eyebrow">БЛИЖЕ, ДАЖЕ НА РАССТОЯНИИ</span>
           <h2>Услышать своих.</h2>
-          <p>Иногда голос говорит больше, чем сообщение.</p>
+          <p>HD видео- и аудиозвонки WebRTC прямо в браузере.</p>
         </div>
-        <span className="calls-heading-icon">
-          <ChatIcon name="video" size={32} />
-        </span>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          {onStartCall && (
+            <button
+              onClick={() => onStartCall("Тест оборудования (Эхо)", "https://i.pravatar.cc/100?img=11", true, true)}
+              style={{
+                background: "linear-gradient(135deg, #7c3aed, #9333ea)",
+                color: "#fff",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "9999px",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                boxShadow: "0 4px 15px rgba(124, 58, 237, 0.25)",
+              }}
+            >
+              🧪 Проверить камеру и микрофон
+            </button>
+          )}
+          <span className="calls-heading-icon">
+            <ChatIcon name="video" size={32} />
+          </span>
+        </div>
       </div>
       <div className="content-toolbar">
         <div className="quiet-tabs">
@@ -668,7 +693,10 @@ export function UtilityPage({
             <button
               className="call-start-button"
               aria-label={`Аудиозвонок: ${p.name}`}
-              onClick={() => { setCallMode("audio"); setCall(p.name) }}
+              onClick={() => {
+                if (onStartCall) onStartCall(p.name, photo(p.id), false)
+                else { setCallMode("audio"); setCall(p.name) }
+              }}
             >
               <ChatIcon name="phone" size={18} />
               <span>Аудио</span>
@@ -676,7 +704,10 @@ export function UtilityPage({
             <button
               className="call-start-button"
               aria-label={`Позвонить: ${p.name}`}
-              onClick={() => { setCallMode("video"); setCall(p.name) }}
+              onClick={() => {
+                if (onStartCall) onStartCall(p.name, photo(p.id), true)
+                else { setCallMode("video"); setCall(p.name) }
+              }}
             >
               <ChatIcon name="video" size={18} />
               <span>Видео</span>
@@ -688,8 +719,7 @@ export function UtilityPage({
         )}
       </div>
       <p className="calls-demo-note">
-        Демонстрация интерфейса · Аудио- и видеозвонки между пользователями пока
-        не подключены.
+        Защищенные P2P звонки WebRTC · Бесплатные Google STUN серверы · Демонстрация экрана и живой звук.
       </p>
       {call && <LocalMediaDialog mode={callMode} recipient={call} onClose={() => setCall("")} />}
     </section>

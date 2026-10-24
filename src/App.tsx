@@ -15,6 +15,8 @@ import OneBadge from "./components/OneBadge"
 import SettingsPage from "./pages/SettingsPage"
 import CreatePostPage from "./pages/CreatePostPage"
 import MapPage from "./pages/MapPage"
+import CallModal, { ActiveCallState } from "./components/CallModal"
+import webrtc from "./lib/webrtc"
 import { supabase, isSupabaseConfigured } from "./lib/supabase"
 
 const routes: Record<string, string> = {
@@ -165,6 +167,7 @@ export default function App() {
     [message, setMessage] = useState(""),
     [circleRecorderOpen, setCircleRecorderOpen] = useState(false),
     [userCircleClip, setUserCircleClip] = useState<string | null>(null)
+  const [activeCall, setActiveCall] = useState<ActiveCallState | null>(null)
   const [searchOpen,setSearchOpen]=useState(false);
   const [returnPage, setReturnPage] = useState("Лента")
   const sidebarRef = useRef<HTMLElement>(null)
@@ -227,6 +230,22 @@ export default function App() {
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
+
+  // WebRTC Сигналинг входящих звонков
+  useEffect(() => {
+    webrtc.initSignaling(name, (signal) => {
+      if (signal.type === "call-request") {
+        setActiveCall({
+          recipientName: signal.fromName,
+          recipientAvatar: signal.fromAvatar || "https://i.pravatar.cc/100?img=12",
+          isVideo: signal.isVideo,
+          isIncoming: true,
+        })
+      } else if (signal.type === "call-end") {
+        setActiveCall(null)
+      }
+    })
+  }, [name])
 
   const loadSupabasePosts = async () => {
     if (!isSupabaseConfigured) return
@@ -734,6 +753,14 @@ export default function App() {
                   onWrite={(n) => {
                     setRecipient(n)
                     nav("Сообщения")
+                  }}
+                  onStartCall={(rName, rAvatar, isVideo, isTestEcho) => {
+                    setActiveCall({
+                      recipientName: rName,
+                      recipientAvatar: rAvatar,
+                      isVideo,
+                      isTestEcho,
+                    })
                   }}
                 />
               ) : (
@@ -1307,6 +1334,14 @@ export default function App() {
           recipientAvatar={donateTarget.avatar}
           recipientRole={donateTarget.role}
           onDonated={(amt) => notify(`Донат ${amt} ₽ успешно отправлен для ${donateTarget.name}`)}
+        />
+      )}
+
+      {activeCall && (
+        <CallModal
+          call={activeCall}
+          currentUserName={name}
+          onClose={() => setActiveCall(null)}
         />
       )}
 
